@@ -48,6 +48,23 @@ export class TeamService {
     return this.call<{ user_id: string }>({ action: 'create_member', ...p });
   }
 
+  /** An account that already exists (e.g. IT staff) joins this department. */
+  addExisting(p: { email: string; department_id: string; member_role: 'manager' | 'member'; job_title: string }) {
+    return this.call<{ user_id: string; full_name: string }>({ action: 'add_existing', ...p });
+  }
+
+  /** Job title / role / active — through the database rules (task_set_member). */
+  async updateMember(m: { user_id: string; is_active: boolean }, departmentId: string, role: 'manager' | 'member', jobTitle: string) {
+    const { error } = await this.sb.rpc('task_set_member', {
+      p_user_id: m.user_id, p_department_id: departmentId, p_member_role: role,
+      p_job_title: jobTitle.trim() || null, p_is_active: m.is_active,
+    });
+    if (error) {
+      const code = /task_only_super_admin_manages_managers|task_not_allowed|task_cannot_edit_self/.test(error.message) ? 'not_allowed' : 'generic';
+      throw new TeamError(code, error.message);
+    }
+  }
+
   resetPassword(userId: string, newPassword: string) {
     return this.call<{ success: true }>({ action: 'reset_password', user_id: userId, new_password: newPassword });
   }

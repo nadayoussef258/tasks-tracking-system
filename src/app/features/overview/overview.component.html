@@ -1,0 +1,140 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">{{ 'overview.title' | t }}</h1>
+      <p class="page-sub">{{ 'overview.subtitle' | t }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn-x" (click)="load()" [attr.aria-label]="'common.refresh' | t"><i class="bi bi-arrow-clockwise"></i>{{ 'common.refresh' | t }}</button>
+      <button type="button" class="btn-x primary" (click)="wizardOpen.set(true)"><i class="bi bi-building-add"></i>{{ 'team.addDept' | t }}</button>
+    </div>
+  </div>
+
+  @if (error()) { <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ error() }}</span></div> }
+
+  @if (loading()) {
+    <div class="loading-x"><span class="spinner-border"></span></div>
+  } @else {
+    <!-- ===== KPIs ===== -->
+    <div class="kpis">
+      <div class="kpi"><span class="kpi-label">{{ 'stats.open' | t }}</span><span class="kpi-num">{{ kpis().open }}</span></div>
+      <div class="kpi"><span class="kpi-label"><span class="dot" style="background: var(--st-in_progress)"></span>{{ 'stats.inProgress' | t }}</span><span class="kpi-num">{{ kpis().inProgress }}</span></div>
+      <div class="kpi"><span class="kpi-label"><span class="dot" style="background: var(--st-in_review)"></span>{{ 'stats.review' | t }}</span><span class="kpi-num">{{ kpis().review }}</span></div>
+      <div class="kpi"><span class="kpi-label"><span class="dot" style="background: var(--st-blocked)"></span>{{ 'status.blocked' | t }}</span><span class="kpi-num">{{ kpis().blocked }}</span></div>
+      <div class="kpi" [class.alarm]="kpis().overdue > 0"><span class="kpi-label"><i class="bi bi-alarm"></i>{{ 'stats.overdue' | t }}</span><span class="kpi-num">{{ kpis().overdue }}</span></div>
+      <div class="kpi good"><span class="kpi-label"><i class="bi bi-check2-circle"></i>{{ 'overview.doneWeek' | t }}</span><span class="kpi-num">{{ kpis().doneWeek }}</span></div>
+    </div>
+
+    <!-- ===== departments ===== -->
+    <h2 class="section-title">{{ 'overview.departments' | t }}</h2>
+    <div class="depts">
+      @for (d of departments(); track d.dept.department_id) {
+        <section class="card-x dept">
+          <div class="dept-head">
+            <span class="dot lg" [style.background]="d.dept.color"></span>
+            <h3>{{ i18n.deptName(d.dept) }}</h3>
+            <button type="button" class="btn-x sm" (click)="openBoard(d.dept)">{{ 'overview.openBoard' | t }}<i class="bi bi-arrow-left flip-ltr"></i></button>
+          </div>
+          @if (d.active) {
+            <div class="stack" role="img" [attr.aria-label]="'overview.statusSplit' | t">
+              @for (s of statuses; track s) {
+                @if (d.counts[s]) {
+                  <span [style.width.%]="pct(d.counts[s], d.active)" [style.background]="'var(--st-' + s + ')'"
+                        [title]="('status.' + s | t) + ': ' + d.counts[s]"></span>
+                }
+              }
+            </div>
+            <div class="legend">
+              @for (s of statuses; track s) {
+                <span><span class="dot" [style.background]="'var(--st-' + s + ')'"></span>{{ 'status.' + s | t }} <b class="ltr-num">{{ d.counts[s] }}</b></span>
+              }
+            </div>
+          } @else {
+            <p class="small-x muted my-2">{{ 'overview.noTasks' | t }}</p>
+          }
+          <div class="dept-foot">
+            <span [class.text-danger]="d.overdue > 0"><i class="bi bi-alarm"></i> {{ 'stats.overdue' | t }}: <b class="ltr-num">{{ d.overdue }}</b></span>
+            <span><i class="bi bi-person-dash"></i> {{ 'task.unassigned' | t }}: <b class="ltr-num">{{ d.unassigned }}</b></span>
+            <span class="good-text"><i class="bi bi-check2-circle"></i> {{ 'overview.doneWeek' | t }}: <b class="ltr-num">{{ d.doneWeek }}</b></span>
+          </div>
+        </section>
+      }
+      <button type="button" class="card-x add-tile" (click)="wizardOpen.set(true)">
+        <i class="bi bi-plus-circle"></i>
+        <strong>{{ 'team.addDept' | t }}</strong>
+        <span class="small-x muted">{{ 'wizard.tileHint' | t }}</span>
+      </button>
+    </div>
+
+    <!-- ===== needs attention ===== -->
+    <h2 class="section-title">{{ 'overview.attention' | t }}</h2>
+    <div class="lists">
+      @for (block of [
+        { key: 'stats.overdue', icon: 'bi-alarm', cls: 'alarm', items: overdueList() },
+        { key: 'overview.waitingReview', icon: 'bi-hourglass-split', cls: 'review', items: reviewList() },
+        { key: 'status.blocked', icon: 'bi-pause-circle', cls: 'blocked', items: blockedList() }
+      ]; track block.key) {
+        <section class="card-x">
+          <div class="card-x-head">
+            <h3 class="card-x-title {{ block.cls }}"><i class="bi {{ block.icon }}"></i>{{ block.key | t }}</h3>
+            <span class="count ltr-num">{{ block.items.length }}</span>
+          </div>
+          @for (t of block.items; track t.id) {
+            <a class="row-t" [routerLink]="['/tasks', t.id]">
+              <span class="row-main">
+                <span class="row-title" dir="auto">{{ t.title }}</span>
+                <span class="small-x muted">
+                  {{ i18n.deptName(deptOf(t)) }} · {{ name(t.assigned_to) || ('task.unassigned' | t) }}
+                  @if (block.cls === 'alarm') { · <span class="text-danger">{{ t.due_date | tdate: 'short' }}</span> }
+                </span>
+                @if (block.cls === 'blocked' && t.blocked_reason) { <span class="small-x reason" dir="auto">{{ t.blocked_reason }}</span> }
+              </span>
+              <i class="bi bi-chevron-left flip-ltr muted"></i>
+            </a>
+          } @empty {
+            <div class="empty-x small-x py-4"><i class="bi bi-emoji-smile"></i>{{ 'overview.nothing' | t }}</div>
+          }
+        </section>
+      }
+    </div>
+
+    <!-- ===== workload ===== -->
+    <h2 class="section-title">{{ 'overview.workload' | t }}</h2>
+    <section class="card-x">
+      @if (!people().length) {
+        <div class="empty-x">{{ 'overview.noAssigned' | t }}</div>
+      } @else {
+        <div class="table-wrap">
+          <table class="load-table">
+            <thead>
+              <tr>
+                <th>{{ 'team.col.name' | t }}</th>
+                <th>{{ 'task.department' | t }}</th>
+                <th class="w-load">{{ 'stats.open' | t }}</th>
+                <th>{{ 'stats.inProgress' | t }}</th>
+                <th>{{ 'stats.review' | t }}</th>
+                <th>{{ 'stats.overdue' | t }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of people(); track p.id) {
+                <tr>
+                  <td><span class="who"><span class="avatar">{{ initials(p.name) }}</span><span dir="auto">{{ p.name }}</span></span></td>
+                  <td class="muted">{{ p.depts }}</td>
+                  <td>
+                    <span class="load"><span class="load-bar"><span [style.width.%]="pct(p.open, maxLoad())"></span></span><b class="ltr-num">{{ p.open }}</b></span>
+                  </td>
+                  <td><span class="ltr-num">{{ p.inProgress }}</span></td>
+                  <td><span class="ltr-num">{{ p.review }}</span></td>
+                  <td><span class="ltr-num" [class.late-num]="p.overdue > 0">{{ p.overdue }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+<app-dept-wizard [open]="wizardOpen()" (closed)="wizardOpen.set(false)" (created)="load()" />

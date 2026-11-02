@@ -1,0 +1,19 @@
+.steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 12px 22px; border-bottom: 1px solid var(--border-soft); background: var(--surface-2); font-size: .8rem; color: var(--muted); }
+.steps li { display: flex; align-items: center; gap: 6px; flex: 1; font-weight: 600; }
+.steps .n { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--border); color: var(--text-2); font-size: .72rem; flex: none; }
+.steps li.on { color: var(--accent); }
+.steps li.on .n { background: var(--accent); color: #fff; }
+.steps li.done .n { background: #16a34a; color: #fff; }
+.lead-x { font-size: .9rem; color: var(--text-2); margin: 0 0 12px; }
+.tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+.tabs button { border: 0; background: none; padding: 6px 14px; border-radius: 8px; font-size: .84rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tabs button.on { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(17,24,39,.08); }
+.ltr-field { direction: ltr; }
+:host-context([dir='rtl']) .ltr-field { text-align: right; }
+.mono { font-family: ui-monospace, Consolas, monospace; letter-spacing: .04em; }
+.pw-row { display: flex; gap: 6px; }
+.pw-row .field-input { flex: 1; }
+.color-input { padding: 4px; cursor: pointer; }
+.link-btn { border: 0; background: none; padding: 0; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.done-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+.done-head > i { font-size: 1.6rem; color: #16a34a; }

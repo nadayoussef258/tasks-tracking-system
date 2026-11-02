@@ -16,7 +16,10 @@ export const managerGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   return auth.isManager() ? true : inject(Router).parseUrl('/my-tasks');
 };
-
+export const superAdminGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.isSuperAdmin() ? true : inject(Router).parseUrl(auth.homeUrl());
+};
 /** '' → the right home page for this person. */
 export const homeGuard: CanActivateFn = () => {
   const auth = inject(AuthService);

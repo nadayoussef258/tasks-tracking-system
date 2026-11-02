@@ -14,8 +14,6 @@
 :host-context([dir='rtl']) .ltr-field { text-align: right; }
 .pw-row { display: flex; gap: 6px; }
 .pw-row .field-input { flex: 1; font-family: ui-monospace, Consolas, monospace; letter-spacing: .04em; }
-.color-input { padding: 4px; cursor: pointer; }
-.creds { display: grid; grid-template-columns: auto 1fr; gap: 10px 16px; margin: 0 0 12px; padding: 14px 16px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
-.creds dt { color: var(--muted); font-size: .84rem; }
-.creds dd { margin: 0; font-weight: 600; word-break: break-all; }
-.creds .pw { font-family: ui-monospace, Consolas, monospace; letter-spacing: .05em; color: var(--accent-dark); }
+.tabs { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+.tabs button { border: 0; background: none; padding: 6px 14px; border-radius: 8px; font-size: .84rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+.tabs button.on { background: var(--surface); color: var(--accent); box-shadow: 0 1px 3px rgba(17,24,39,.08); }

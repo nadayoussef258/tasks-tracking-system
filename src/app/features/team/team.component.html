@@ -6,7 +6,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
       @if (auth.isSuperAdmin()) {
-        <button type="button" class="btn-x" (click)="openDept()"><i class="bi bi-building-add"></i>{{ 'team.addDept' | t }}</button>
+        <button type="button" class="btn-x" (click)="wizardOpen.set(true)"><i class="bi bi-building-add"></i>{{ 'team.addDept' | t }}</button>
       }
       <button type="button" class="btn-x primary" (click)="openMember()" [disabled]="!dept()"><i class="bi bi-person-plus"></i>{{ 'team.addMember' | t }}</button>
     </div>
@@ -68,6 +68,9 @@
                   }
                 </td>
                 <td class="actions">
+                  @if (canEdit(m)) {
+                    <button type="button" class="btn-x sm" (click)="openEdit(m)"><i class="bi bi-pencil"></i>{{ 'common.edit' | t }}</button>
+                  }
                   @if (m.can_manage) {
                     <button type="button" class="btn-x sm" (click)="openPassword(m)"><i class="bi bi-key"></i>{{ 'team.resetPassword' | t }}</button>
                     <button type="button" class="btn-x sm" [class.danger]="m.is_active" (click)="toggleStatus(m)">
@@ -93,44 +96,49 @@
           @switch (modal()) {
             @case ('member') { {{ (role() === 'manager' ? 'team.addManagerTitle' : 'team.addMemberTitle') | t: { dept: i18n.deptName(dept()) } }} }
             @case ('password') { {{ 'team.resetTitle' | t: { name: target()?.full_name } }} }
-            @case ('dept') { {{ 'team.addDept' | t }} }
+            @case ('edit') { {{ 'team.editTitle' | t: { name: target()?.full_name } }} }
           }
         </h2>
         <button type="button" class="btn-x ghost icon" (click)="close()" [attr.aria-label]="'common.close' | t"><i class="bi bi-x-lg"></i></button>
       </div>
 
       @if (creds(); as c) {
-        <!-- ===== account details to pass on ===== -->
-        <div class="modal-x-body">
-          <div class="alert-x info"><i class="bi bi-check-circle"></i><span>{{ 'team.credsIntro' | t }}</span></div>
-          <dl class="creds">
-            <dt>{{ 'team.credsUrl' | t }}</dt><dd class="ltr-num">{{ appUrl }}</dd>
-            <dt>{{ 'login.email' | t }}</dt><dd class="ltr-num">{{ c.email }}</dd>
-            <dt>{{ 'login.password' | t }}</dt><dd class="ltr-num pw">{{ c.password }}</dd>
-          </dl>
-          <p class="small-x muted mb-0">{{ 'team.credsWarning' | t }}</p>
-        </div>
+        <div class="modal-x-body"><app-credentials [creds]="c" /></div>
         <div class="modal-x-foot">
-          <button type="button" class="btn-x" (click)="close()">{{ 'common.close' | t }}</button>
-          <button type="button" class="btn-x primary" (click)="copyCreds()"><i class="bi bi-clipboard"></i>{{ 'team.copy' | t }}</button>
+          <button type="button" class="btn-x primary" (click)="close()">{{ 'wizard.finish' | t }}</button>
         </div>
       } @else {
-        <form (ngSubmit)="modal() === 'member' ? createMember() : modal() === 'password' ? resetPassword() : createDept()">
+        <form (ngSubmit)="submit()">
           <div class="modal-x-body">
+            @if (modal() === 'member') {
+              <div class="tabs" role="tablist">
+                <button type="button" role="tab" [class.on]="mode() === 'new'" [attr.aria-selected]="mode() === 'new'" (click)="mode.set('new')">{{ 'team.mode.new' | t }}</button>
+                <button type="button" role="tab" [class.on]="mode() === 'existing'" [attr.aria-selected]="mode() === 'existing'" (click)="mode.set('existing')">{{ 'team.mode.existing' | t }}</button>
+              </div>
+            }
             @if (formError()) {
-              <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ formError() }}</span></div>
+              <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i>
+                <span>{{ formError() }}
+                  @if (formErrorCode() === 'email_exists') { <button type="button" class="link-btn" (click)="switchToExisting()">{{ 'team.useExisting' | t }}</button> }
+                </span>
+              </div>
             }
 
             @if (modal() === 'member') {
-              <div class="field">
-                <label class="field-label" for="tmName">{{ 'team.fullName' | t }} *</label>
-                <input id="tmName" class="field-input" name="name" maxlength="100" [(ngModel)]="fullName" />
-              </div>
+              @if (mode() === 'new') {
+                <div class="field">
+                  <label class="field-label" for="tmName">{{ 'team.fullName' | t }} *</label>
+                  <input id="tmName" class="field-input" name="name" maxlength="100" [(ngModel)]="fullName" />
+                </div>
+              }
               <div class="field">
                 <label class="field-label" for="tmEmail">{{ 'login.email' | t }} *</label>
                 <input id="tmEmail" type="email" class="field-input ltr-field" name="email" autocomplete="off" [(ngModel)]="email" placeholder="name@company.com" />
-                <div class="field-hint">{{ 'team.emailHint' | t }}</div>
+                <div class="field-hint">{{ (mode() === 'new' ? 'team.emailHint' : 'team.existingHint') | t }}</div>
               </div>
+            }
+
+            @if (modal() === 'member' || modal() === 'edit') {
               <div class="row g-3">
                 <div [class.col-sm-6]="auth.isSuperAdmin()" [class.col-12]="!auth.isSuperAdmin()">
                   <label class="field-label" for="tmJob">{{ 'team.jobTitle' | t }}</label>
@@ -146,9 +154,12 @@
                   </div>
                 }
               </div>
+              @if (modal() === 'edit' && auth.isSuperAdmin() && target()?.member_role !== role()) {
+                <div class="alert-x info mt-3 mb-0"><i class="bi bi-info-circle"></i><span>{{ (role() === 'manager' ? 'team.promoteHint' : 'team.demoteHint') | t }}</span></div>
+              }
             }
 
-            @if (modal() === 'member' || modal() === 'password') {
+            @if ((modal() === 'member' && mode() === 'new') || modal() === 'password') {
               <div class="field mt-3 mb-0">
                 <label class="field-label" for="tmPassword">{{ (modal() === 'password' ? 'team.newPassword' : 'login.password') | t }} *</label>
                 <div class="pw-row">
@@ -162,36 +173,13 @@
                 <div class="field-hint">{{ 'team.passwordHint' | t }}</div>
               </div>
             }
-
-            @if (modal() === 'dept') {
-              <div class="row g-3">
-                <div class="col-sm-6">
-                  <label class="field-label" for="dNameAr">{{ 'team.deptNameAr' | t }} *</label>
-                  <input id="dNameAr" class="field-input" name="nameAr" dir="rtl" maxlength="100" [(ngModel)]="deptNameAr" placeholder="التسويق" />
-                </div>
-                <div class="col-sm-6">
-                  <label class="field-label" for="dNameEn">{{ 'team.deptNameEn' | t }} *</label>
-                  <input id="dNameEn" class="field-input" name="nameEn" dir="ltr" maxlength="100" [(ngModel)]="deptNameEn" placeholder="Marketing" />
-                </div>
-                <div class="col-sm-6">
-                  <label class="field-label" for="dCode">{{ 'team.deptCode' | t }} *</label>
-                  <input id="dCode" class="field-input ltr-field" name="code" maxlength="20" [(ngModel)]="deptCode" placeholder="MKT" />
-                  <div class="field-hint">{{ 'team.deptCodeHint' | t }}</div>
-                </div>
-                <div class="col-sm-6">
-                  <label class="field-label" for="dColor">{{ 'team.deptColor' | t }}</label>
-                  <input id="dColor" type="color" class="field-input color-input" name="color" [(ngModel)]="deptColor" />
-                </div>
-              </div>
-              <div class="alert-x info mt-3 mb-0"><i class="bi bi-info-circle"></i><span>{{ 'team.deptSharedHint' | t }}</span></div>
-            }
           </div>
           <div class="modal-x-foot">
             <button type="button" class="btn-x" (click)="close()">{{ 'common.cancel' | t }}</button>
             <button type="submit" class="btn-x primary"
-                    [disabled]="saving() || (modal() === 'member' && !memberValid()) || (modal() === 'password' && password().length < 8) || (modal() === 'dept' && !deptValid())">
+                    [disabled]="saving() || (modal() === 'member' && !memberValid()) || (modal() === 'password' && password().length < 8)">
               @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
-              {{ (modal() === 'member' ? 'team.createAccount' : modal() === 'password' ? 'team.savePassword' : 'team.createDept') | t }}
+              {{ (modal() === 'member' ? (mode() === 'new' ? 'team.createAccount' : 'team.addToDept') : modal() === 'password' ? 'team.savePassword' : 'common.save') | t }}
             </button>
           </div>
         </form>
@@ -199,3 +187,5 @@
     </div>
   </div>
 }
+
+<app-dept-wizard [open]="wizardOpen()" (closed)="wizardOpen.set(false)" (created)="load()" />

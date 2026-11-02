@@ -1,0 +1,129 @@
+@if (open()) {
+  <div class="modal-x-backdrop" (click)="closed.emit()">
+    <div class="modal-x" role="dialog" aria-modal="true" [attr.aria-label]="'wizard.title' | t" (click)="$event.stopPropagation()">
+      <div class="modal-x-head">
+        <h2>{{ 'wizard.title' | t }}</h2>
+        <button type="button" class="btn-x ghost icon" (click)="closed.emit()" [attr.aria-label]="'common.close' | t"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <!-- progress -->
+      <ol class="steps">
+        <li [class.on]="step() === 'dept'" [class.done]="step() !== 'dept'"><span class="n">1</span>{{ 'wizard.step1' | t }}</li>
+        <li [class.on]="step() === 'manager'" [class.done]="step() === 'done'"><span class="n">2</span>{{ 'wizard.step2' | t }}</li>
+        <li [class.on]="step() === 'done'"><span class="n">3</span>{{ 'wizard.step3' | t }}</li>
+      </ol>
+
+      @switch (step()) {
+        @case ('dept') {
+          <form (ngSubmit)="createDept()">
+            <div class="modal-x-body">
+              @if (error()) { <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ error() }}</span></div> }
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="field-label" for="wzNameAr">{{ 'team.deptNameAr' | t }} *</label>
+                  <input id="wzNameAr" class="field-input" name="nameAr" dir="rtl" maxlength="100" [(ngModel)]="nameAr" placeholder="التسويق" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="wzNameEn">{{ 'team.deptNameEn' | t }} *</label>
+                  <input id="wzNameEn" class="field-input" name="nameEn" dir="ltr" maxlength="100" [(ngModel)]="nameEn" placeholder="Marketing" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="wzCode">{{ 'team.deptCode' | t }} *</label>
+                  <input id="wzCode" class="field-input ltr-field" name="code" maxlength="20" [(ngModel)]="code" placeholder="MKT" />
+                  <div class="field-hint">{{ 'team.deptCodeHint' | t }}</div>
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="wzColor">{{ 'team.deptColor' | t }}</label>
+                  <input id="wzColor" type="color" class="field-input color-input" name="color" [(ngModel)]="color" />
+                </div>
+              </div>
+              <div class="alert-x info mt-3 mb-0"><i class="bi bi-info-circle"></i><span>{{ 'team.deptSharedHint' | t }}</span></div>
+            </div>
+            <div class="modal-x-foot">
+              <button type="button" class="btn-x" (click)="closed.emit()">{{ 'common.cancel' | t }}</button>
+              <button type="submit" class="btn-x primary" [disabled]="!deptValid() || saving()">
+                @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
+                {{ 'wizard.createAndNext' | t }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @case ('manager') {
+          <form (ngSubmit)="addManager()">
+            <div class="modal-x-body">
+              <p class="lead-x">{{ 'wizard.managerIntro' | t: { dept: deptLabel() } }}</p>
+              <div class="tabs" role="tablist">
+                <button type="button" role="tab" [class.on]="mode() === 'new'" [attr.aria-selected]="mode() === 'new'" (click)="mode.set('new')">{{ 'team.mode.new' | t }}</button>
+                <button type="button" role="tab" [class.on]="mode() === 'existing'" [attr.aria-selected]="mode() === 'existing'" (click)="mode.set('existing')">{{ 'team.mode.existing' | t }}</button>
+              </div>
+              @if (error()) {
+                <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i>
+                  <span>{{ error() }}
+                    @if (errorCode() === 'email_exists') { <button type="button" class="link-btn" (click)="switchToExisting()">{{ 'team.useExisting' | t }}</button> }
+                  </span>
+                </div>
+              }
+              @if (mode() === 'new') {
+                <div class="field">
+                  <label class="field-label" for="wzName">{{ 'team.fullName' | t }} *</label>
+                  <input id="wzName" class="field-input" name="name" maxlength="100" [(ngModel)]="fullName" />
+                </div>
+              }
+              <div class="field">
+                <label class="field-label" for="wzEmail">{{ 'login.email' | t }} *</label>
+                <input id="wzEmail" type="email" class="field-input ltr-field" name="email" autocomplete="off" [(ngModel)]="email" placeholder="name@company.com" />
+                <div class="field-hint">{{ (mode() === 'new' ? 'team.emailHint' : 'team.existingHint') | t }}</div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="wzJob">{{ 'team.jobTitle' | t }}</label>
+                <input id="wzJob" class="field-input" name="job" maxlength="100" [(ngModel)]="jobTitle" [placeholder]="'wizard.managerJobPh' | t" />
+              </div>
+              @if (mode() === 'new') {
+                <div class="field mb-0">
+                  <label class="field-label" for="wzPassword">{{ 'login.password' | t }} *</label>
+                  <div class="pw-row">
+                    <input id="wzPassword" [type]="showPassword() ? 'text' : 'password'" class="field-input ltr-field mono" name="password"
+                           autocomplete="new-password" minlength="8" maxlength="72" [(ngModel)]="password" />
+                    <button type="button" class="btn-x icon" (click)="showPassword.set(!showPassword())" [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | t">
+                      <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                    </button>
+                    <button type="button" class="btn-x" (click)="newPassword()"><i class="bi bi-arrow-repeat"></i>{{ 'team.generate' | t }}</button>
+                  </div>
+                  <div class="field-hint">{{ 'team.passwordHint' | t }}</div>
+                </div>
+              }
+            </div>
+            <div class="modal-x-foot">
+              <button type="button" class="btn-x me-auto" (click)="step.set('done')">{{ 'wizard.skip' | t }}</button>
+              <button type="submit" class="btn-x primary" [disabled]="!managerValid() || saving()">
+                @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
+                {{ 'wizard.addManager' | t }}
+              </button>
+            </div>
+          </form>
+        }
+
+        @case ('done') {
+          <div class="modal-x-body">
+            <div class="done-head">
+              <i class="bi bi-check-circle-fill"></i>
+              <div>
+                <strong>{{ 'wizard.doneTitle' | t: { dept: deptLabel() } }}</strong>
+                <div class="small-x muted">
+                  {{ managerName() ? ('wizard.doneManager' | t: { name: managerName() }) : ('wizard.doneNoManager' | t) }}
+                </div>
+              </div>
+            </div>
+            @if (creds(); as c) { <app-credentials [creds]="c" /> }
+            <p class="small-x muted mt-3 mb-0">{{ 'wizard.nextHint' | t }}</p>
+          </div>
+          <div class="modal-x-foot">
+            <button type="button" class="btn-x" (click)="closed.emit()">{{ 'wizard.finish' | t }}</button>
+            <button type="button" class="btn-x primary" (click)="goToTeam()"><i class="bi bi-people"></i>{{ 'wizard.openTeam' | t }}</button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+}

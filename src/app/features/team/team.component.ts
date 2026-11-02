@@ -6,13 +6,15 @@ import { ToastService } from '../../core/services/toast.service';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { TranslatePipe } from '../../core/i18n/t.pipe';
 import { initials } from '../../shared/task-rules';
+import { Credentials, CredentialsComponent } from '../../shared/credentials/credentials.component';
+import { DeptWizardComponent } from '../../shared/dept-wizard/dept-wizard.component';
 
-type Modal = 'member' | 'password' | 'dept' | null;
+type Modal = 'member' | 'password' | 'edit' | null;
 
-/** Team management: members of a department, accounts, departments (super admin). */
+/** Team management: members of a department and their accounts. */
 @Component({
   selector: 'app-team',
-  imports: [FormsModule, TranslatePipe],
+  imports: [FormsModule, TranslatePipe, CredentialsComponent, DeptWizardComponent],
   templateUrl: './team.component.html',
   styleUrl: './team.component.css',
 })
@@ -28,32 +30,28 @@ export class TeamComponent {
   loadError = signal('');
 
   modal = signal<Modal>(null);
+  wizardOpen = signal(false);
   saving = signal(false);
   formError = signal('');
+  formErrorCode = signal('');
   showPassword = signal(true);
-  /** shown after an account is created / a password is reset, to pass on */
-  creds = signal<{ name: string; email: string; password: string } | null>(null);
+  creds = signal<Credentials | null>(null);
 
   // add member
+  mode = signal<'new' | 'existing'>('new');
   fullName = signal('');
   email = signal('');
   jobTitle = signal('');
   role = signal<'member' | 'manager'>('member');
   password = signal('');
-  // reset password
+  // reset password / edit
   target = signal<TeamMember | null>(null);
-  // add department
-  deptCode = signal('');
-  deptNameAr = signal('');
-  deptNameEn = signal('');
-  deptColor = signal('#4f46e5');
 
   readonly managers = computed(() => this.members().filter((m) => m.member_role === 'manager'));
-  readonly appUrl = location.origin;
-  readonly memberValid = computed(() =>
-    this.fullName().trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email().trim()) && this.password().length >= 8);
-  readonly deptValid = computed(() =>
-    /^[A-Za-z0-9-]{2,20}$/.test(this.deptCode().trim()) && this.deptNameAr().trim().length >= 2 && this.deptNameEn().trim().length >= 2);
+  readonly memberValid = computed(() => {
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email().trim());
+    return this.mode() === 'existing' ? emailOk : emailOk && this.fullName().trim().length >= 2 && this.password().length >= 8;
+  });
   initials = initials;
 
   constructor() {
@@ -77,8 +75,15 @@ export class TeamComponent {
     }
   }
 
+  /** Same rules as the database: the super admin edits anyone else; a manager edits the members of his team. */
+  canEdit(m: TeamMember): boolean {
+    if (m.user_id === this.auth.userId()) return false;
+    return this.auth.isSuperAdmin() || m.member_role === 'member';
+  }
+
   // ------------------------------------------------------------- modals
   openMember(role: 'member' | 'manager' = 'member') {
+    this.mode.set('new');
     this.fullName.set(''); this.email.set(''); this.jobTitle.set('');
     this.role.set(this.auth.isSuperAdmin() ? role : 'member');
     this.password.set(generatePassword());
@@ -91,36 +96,57 @@ export class TeamComponent {
     this.open('password');
   }
 
-  openDept() {
-    this.deptCode.set(''); this.deptNameAr.set(''); this.deptNameEn.set(''); this.deptColor.set('#4f46e5');
-    this.open('dept');
+  openEdit(m: TeamMember) {
+    this.target.set(m);
+    this.jobTitle.set(m.job_title ?? '');
+    this.role.set(m.member_role);
+    this.open('edit');
   }
 
   private open(m: Modal) {
-    this.formError.set('');
+    this.setError('', '');
     this.creds.set(null);
     this.showPassword.set(true);
     this.modal.set(m);
   }
 
-  close() {
-    this.modal.set(null);
-    this.creds.set(null);
-  }
+  close() { this.modal.set(null); this.creds.set(null); }
 
   newPassword() { this.password.set(generatePassword()); }
 
+  switchToExisting() { this.mode.set('existing'); this.setError('', ''); }
+
   // ------------------------------------------------------------ actions
-  async createMember() {
+  async addMember() {
     const d = this.dept();
     if (!d || !this.memberValid() || this.saving()) return;
     await this.run(async () => {
-      await this.team.createMember({
-        email: this.email().trim(), password: this.password(), full_name: this.fullName().trim(),
-        department_id: d.department_id, member_role: this.role(), job_title: this.jobTitle().trim(),
-      });
-      this.creds.set({ name: this.fullName().trim(), email: this.email().trim().toLowerCase(), password: this.password() });
-      this.toast.success(this.i18n.t('team.toast.created'));
+      if (this.mode() === 'existing') {
+        const res = await this.team.addExisting({
+          email: this.email().trim(), department_id: d.department_id, member_role: this.role(), job_title: this.jobTitle().trim(),
+        });
+        this.toast.success(this.i18n.t('team.toast.added', { name: res.full_name }));
+        this.close();
+      } else {
+        await this.team.createMember({
+          email: this.email().trim(), password: this.password(), full_name: this.fullName().trim(),
+          department_id: d.department_id, member_role: this.role(), job_title: this.jobTitle().trim(),
+        });
+        this.creds.set({ name: this.fullName().trim(), email: this.email().trim().toLowerCase(), password: this.password() });
+        this.toast.success(this.i18n.t('team.toast.created'));
+      }
+      this.load();
+    });
+  }
+
+  async saveEdit() {
+    const m = this.target();
+    const d = this.dept();
+    if (!m || !d || this.saving()) return;
+    await this.run(async () => {
+      await this.team.updateMember(m, d.department_id, this.auth.isSuperAdmin() ? this.role() : m.member_role, this.jobTitle());
+      this.toast.success(this.i18n.t('toast.saved'));
+      this.close();
       this.load();
     });
   }
@@ -147,38 +173,26 @@ export class TeamComponent {
     }
   }
 
-  async createDept() {
-    if (!this.deptValid() || this.saving()) return;
-    await this.run(async () => {
-      const res = await this.team.createDepartment({
-        code: this.deptCode().trim().toUpperCase(), name_ar: this.deptNameAr().trim(),
-        name_en: this.deptNameEn().trim(), color: this.deptColor(),
-      });
-      await this.auth.reloadContext();
-      this.auth.selectDepartment(res.department.id);
-      this.toast.success(this.i18n.t('team.toast.deptCreated'));
-      // next natural step: the department's manager
-      this.openMember('manager');
-    });
-  }
-
-  async copyCreds() {
-    const c = this.creds();
-    if (!c) return;
-    const text = this.i18n.t('team.credsText', { name: c.name, url: this.appUrl, email: c.email, password: c.password });
-    try {
-      await navigator.clipboard.writeText(text);
-      this.toast.success(this.i18n.t('team.toast.copied'));
-    } catch {
-      this.toast.error(this.i18n.t('err.generic'));
-    }
+  submit() {
+    const m = this.modal();
+    if (m === 'member') this.addMember();
+    else if (m === 'password') this.resetPassword();
+    else if (m === 'edit') this.saveEdit();
   }
 
   // ------------------------------------------------------------ helpers
+  private setError(text: string, code: string) { this.formError.set(text); this.formErrorCode.set(code); }
+
   private async run(fn: () => Promise<void>) {
     this.saving.set(true);
-    this.formError.set('');
-    try { await fn(); } catch (err) { this.formError.set(this.message(err)); } finally { this.saving.set(false); }
+    this.setError('', '');
+    try {
+      await fn();
+    } catch (err) {
+      this.setError(this.message(err), err instanceof TeamError ? err.code : '');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   private message(err: unknown): string {
@@ -187,4 +201,4 @@ export class TeamComponent {
     const text = this.i18n.t(key);
     return text !== key ? text : this.i18n.t('err.generic');
   }
-}
+} 

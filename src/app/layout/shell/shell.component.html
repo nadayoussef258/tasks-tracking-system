@@ -6,6 +6,9 @@
     </a>
 
     <nav class="nav-links" [attr.aria-label]="'nav.main' | t">
+      @if (auth.isSuperAdmin()) {
+        <a routerLink="/overview" routerLinkActive="active"><i class="bi bi-grid-1x2"></i><span>{{ 'nav.overview' | t }}</span></a>
+      }
       @if (auth.isManager()) {
         <a routerLink="/board" routerLinkActive="active"><i class="bi bi-columns-gap"></i><span>{{ 'nav.board' | t }}</span></a>
         <a routerLink="/team" routerLinkActive="active"><i class="bi bi-people"></i><span>{{ 'nav.team' | t }}</span></a>
@@ -16,9 +19,10 @@
     <div class="topbar-end">
       @if (auth.managedDepartments().length > 1) {
         <label class="sr-only" for="deptSwitch">{{ 'nav.department' | t }}</label>
-        <select id="deptSwitch" class="dept-switch" [value]="auth.currentDepartment()?.department_id" (change)="onDeptChange($event)">
+        <select id="deptSwitch" class="dept-switch" (change)="onDeptChange($event)">
           @for (d of auth.managedDepartments(); track d.department_id) {
-            <option [value]="d.department_id">{{ i18n.deptName(d) }}</option>
+            <!-- [selected] per option: stays right when the list changes (a new department) -->
+            <option [value]="d.department_id" [selected]="d.department_id === auth.currentDepartment()?.department_id">{{ i18n.deptName(d) }}</option>
           }
         </select>
       }

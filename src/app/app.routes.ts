@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard, homeGuard, managerGuard } from './core/guards/auth.guards';
+import { authGuard, guestGuard, homeGuard, managerGuard, superAdminGuard } from './core/guards/auth.guards';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
@@ -12,6 +12,10 @@ export const routes: Routes = [
   path: 'team',
   canActivate: [managerGuard],
   loadComponent: () => import('./features/team/team.component').then((m) => m.TeamComponent),
+},{
+  path: 'overview',
+  canActivate: [superAdminGuard],
+  loadComponent: () => import('./features/overview/overview.component').then((m) => m.OverviewComponent),
 },
   {
     path: '',
@@ -27,6 +31,10 @@ export const routes: Routes = [
   path: 'team',
   canActivate: [managerGuard],
   loadComponent: () => import('./features/team/team.component').then((m) => m.TeamComponent),
+},{
+  path: 'overview',
+  canActivate: [superAdminGuard],
+  loadComponent: () => import('./features/overview/overview.component').then((m) => m.OverviewComponent),
 },
       {
         path: 'my-tasks',

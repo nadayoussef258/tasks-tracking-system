@@ -81,7 +81,7 @@ async reloadContext(): Promise<void> {
   }
 
   homeUrl(): string {
-    return this.isManager() ? '/board' : '/my-tasks';
+return this.isSuperAdmin() ? '/overview' : this.isManager() ? '/board' : '/my-tasks';
   }
 
   canManage(departmentId: string | null | undefined): boolean {
