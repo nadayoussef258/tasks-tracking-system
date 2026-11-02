@@ -1,0 +1,36 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="text-center mb-4">
+      <div class="brand-icon mx-auto mb-3"><i class="bi bi-kanban"></i></div>
+      <h1 class="login-title">{{ 'app.name' | t }}</h1>
+      <p class="login-sub">{{ 'login.subtitle' | t }}</p>
+    </div>
+
+    @if (error()) {
+      <div class="alert-x error" role="alert"><i class="bi bi-exclamation-triangle"></i><span>{{ error() }}</span></div>
+    }
+
+    <form (ngSubmit)="onLogin()">
+      <div class="field">
+        <label class="field-label" for="loginEmail">{{ 'login.email' | t }}</label>
+        <input id="loginEmail" type="email" class="field-input ltr-input" name="email" autocomplete="username" required
+               placeholder="you@company.com" [(ngModel)]="email" [disabled]="loading()" />
+      </div>
+      <div class="field mb-4">
+        <label class="field-label" for="loginPassword">{{ 'login.password' | t }}</label>
+        <div class="pw-wrap">
+          <input id="loginPassword" [type]="showPassword() ? 'text' : 'password'" class="field-input ltr-input" name="password"
+                 autocomplete="current-password" required placeholder="••••••••" [(ngModel)]="password" [disabled]="loading()" />
+          <button type="button" class="eye-btn" (click)="showPassword.set(!showPassword())"
+                  [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | t">
+            <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn-x primary w-100 btn-signin" [disabled]="loading() || !email() || !password()">
+        @if (loading()) { <span class="spinner-border spinner-border-sm"></span> }
+        {{ (loading() ? 'login.signingIn' : 'login.signIn') | t }}
+      </button>
+    </form>
+  </div>
+</div>

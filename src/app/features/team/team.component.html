@@ -1,0 +1,201 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">{{ 'team.title' | t: { dept: i18n.deptName(dept()) } }}</h1>
+      <p class="page-sub">{{ 'team.subtitle' | t }}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      @if (auth.isSuperAdmin()) {
+        <button type="button" class="btn-x" (click)="openDept()"><i class="bi bi-building-add"></i>{{ 'team.addDept' | t }}</button>
+      }
+      <button type="button" class="btn-x primary" (click)="openMember()" [disabled]="!dept()"><i class="bi bi-person-plus"></i>{{ 'team.addMember' | t }}</button>
+    </div>
+  </div>
+
+  @if (auth.isSuperAdmin() && !loading() && !managers().length && dept()) {
+    <div class="alert-x warn">
+      <i class="bi bi-person-exclamation"></i>
+      <span>{{ 'team.noManager' | t }}
+        <button type="button" class="link-btn" (click)="openMember('manager')">{{ 'team.addManagerNow' | t }}</button>
+      </span>
+    </div>
+  }
+  @if (loadError()) {
+    <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ loadError() }}</span></div>
+  }
+
+  <div class="card-x">
+    @if (loading()) {
+      <div class="loading-x"><span class="spinner-border"></span></div>
+    } @else if (!members().length) {
+      <div class="empty-x"><i class="bi bi-people"></i>{{ 'team.empty' | t }}</div>
+    } @else {
+      <div class="table-wrap">
+        <table class="team-table">
+          <thead>
+            <tr>
+              <th>{{ 'team.col.name' | t }}</th>
+              <th>{{ 'team.col.email' | t }}</th>
+              <th>{{ 'team.col.role' | t }}</th>
+              <th>{{ 'team.col.status' | t }}</th>
+              <th><span class="sr-only">{{ 'team.col.actions' | t }}</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of members(); track m.user_id) {
+              <tr [class.off]="!m.is_active">
+                <td>
+                  <div class="who">
+                    <span class="avatar">{{ initials(m.full_name) }}</span>
+                    <div>
+                      <div class="name" dir="auto">{{ m.full_name }}</div>
+                      @if (m.job_title) { <div class="small-x muted" dir="auto">{{ m.job_title }}</div> }
+                    </div>
+                  </div>
+                </td>
+                <td><span class="ltr-num small-x">{{ m.email }}</span></td>
+                <td>
+                  <span class="chip" [class.st-in_progress]="m.member_role === 'manager'">{{ 'team.role.' + m.member_role | t }}</span>
+                  @if (m.account_type === 'it_staff' || m.account_type === 'admin') {
+                    <span class="chip ms-1" [title]="'team.ticketingAccountHint' | t">{{ 'team.ticketingAccount' | t }}</span>
+                  }
+                </td>
+                <td>
+                  @if (m.is_active) {
+                    <span class="chip st-done">{{ 'team.active' | t }}</span>
+                  } @else {
+                    <span class="chip st-cancelled">{{ 'team.disabled' | t }}</span>
+                  }
+                </td>
+                <td class="actions">
+                  @if (m.can_manage) {
+                    <button type="button" class="btn-x sm" (click)="openPassword(m)"><i class="bi bi-key"></i>{{ 'team.resetPassword' | t }}</button>
+                    <button type="button" class="btn-x sm" [class.danger]="m.is_active" (click)="toggleStatus(m)">
+                      <i class="bi" [class.bi-person-slash]="m.is_active" [class.bi-person-check]="!m.is_active"></i>
+                      {{ (m.is_active ? 'team.disable' : 'team.enable') | t }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (modal()) {
+  <div class="modal-x-backdrop" (click)="close()">
+    <div class="modal-x" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-x-head">
+        <h2>
+          @switch (modal()) {
+            @case ('member') { {{ (role() === 'manager' ? 'team.addManagerTitle' : 'team.addMemberTitle') | t: { dept: i18n.deptName(dept()) } }} }
+            @case ('password') { {{ 'team.resetTitle' | t: { name: target()?.full_name } }} }
+            @case ('dept') { {{ 'team.addDept' | t }} }
+          }
+        </h2>
+        <button type="button" class="btn-x ghost icon" (click)="close()" [attr.aria-label]="'common.close' | t"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      @if (creds(); as c) {
+        <!-- ===== account details to pass on ===== -->
+        <div class="modal-x-body">
+          <div class="alert-x info"><i class="bi bi-check-circle"></i><span>{{ 'team.credsIntro' | t }}</span></div>
+          <dl class="creds">
+            <dt>{{ 'team.credsUrl' | t }}</dt><dd class="ltr-num">{{ appUrl }}</dd>
+            <dt>{{ 'login.email' | t }}</dt><dd class="ltr-num">{{ c.email }}</dd>
+            <dt>{{ 'login.password' | t }}</dt><dd class="ltr-num pw">{{ c.password }}</dd>
+          </dl>
+          <p class="small-x muted mb-0">{{ 'team.credsWarning' | t }}</p>
+        </div>
+        <div class="modal-x-foot">
+          <button type="button" class="btn-x" (click)="close()">{{ 'common.close' | t }}</button>
+          <button type="button" class="btn-x primary" (click)="copyCreds()"><i class="bi bi-clipboard"></i>{{ 'team.copy' | t }}</button>
+        </div>
+      } @else {
+        <form (ngSubmit)="modal() === 'member' ? createMember() : modal() === 'password' ? resetPassword() : createDept()">
+          <div class="modal-x-body">
+            @if (formError()) {
+              <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ formError() }}</span></div>
+            }
+
+            @if (modal() === 'member') {
+              <div class="field">
+                <label class="field-label" for="tmName">{{ 'team.fullName' | t }} *</label>
+                <input id="tmName" class="field-input" name="name" maxlength="100" [(ngModel)]="fullName" />
+              </div>
+              <div class="field">
+                <label class="field-label" for="tmEmail">{{ 'login.email' | t }} *</label>
+                <input id="tmEmail" type="email" class="field-input ltr-field" name="email" autocomplete="off" [(ngModel)]="email" placeholder="name@company.com" />
+                <div class="field-hint">{{ 'team.emailHint' | t }}</div>
+              </div>
+              <div class="row g-3">
+                <div [class.col-sm-6]="auth.isSuperAdmin()" [class.col-12]="!auth.isSuperAdmin()">
+                  <label class="field-label" for="tmJob">{{ 'team.jobTitle' | t }}</label>
+                  <input id="tmJob" class="field-input" name="job" maxlength="100" [(ngModel)]="jobTitle" [placeholder]="'team.jobTitlePh' | t" />
+                </div>
+                @if (auth.isSuperAdmin()) {
+                  <div class="col-sm-6">
+                    <label class="field-label" for="tmRole">{{ 'team.col.role' | t }}</label>
+                    <select id="tmRole" class="field-select" name="role" [(ngModel)]="role">
+                      <option value="member">{{ 'team.role.member' | t }}</option>
+                      <option value="manager">{{ 'team.role.manager' | t }}</option>
+                    </select>
+                  </div>
+                }
+              </div>
+            }
+
+            @if (modal() === 'member' || modal() === 'password') {
+              <div class="field mt-3 mb-0">
+                <label class="field-label" for="tmPassword">{{ (modal() === 'password' ? 'team.newPassword' : 'login.password') | t }} *</label>
+                <div class="pw-row">
+                  <input id="tmPassword" [type]="showPassword() ? 'text' : 'password'" class="field-input ltr-field" name="password"
+                         autocomplete="new-password" minlength="8" maxlength="72" [(ngModel)]="password" />
+                  <button type="button" class="btn-x icon" (click)="showPassword.set(!showPassword())" [attr.aria-label]="(showPassword() ? 'login.hidePassword' : 'login.showPassword') | t">
+                    <i class="bi" [class.bi-eye]="!showPassword()" [class.bi-eye-slash]="showPassword()"></i>
+                  </button>
+                  <button type="button" class="btn-x" (click)="newPassword()"><i class="bi bi-arrow-repeat"></i>{{ 'team.generate' | t }}</button>
+                </div>
+                <div class="field-hint">{{ 'team.passwordHint' | t }}</div>
+              </div>
+            }
+
+            @if (modal() === 'dept') {
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <label class="field-label" for="dNameAr">{{ 'team.deptNameAr' | t }} *</label>
+                  <input id="dNameAr" class="field-input" name="nameAr" dir="rtl" maxlength="100" [(ngModel)]="deptNameAr" placeholder="التسويق" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="dNameEn">{{ 'team.deptNameEn' | t }} *</label>
+                  <input id="dNameEn" class="field-input" name="nameEn" dir="ltr" maxlength="100" [(ngModel)]="deptNameEn" placeholder="Marketing" />
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="dCode">{{ 'team.deptCode' | t }} *</label>
+                  <input id="dCode" class="field-input ltr-field" name="code" maxlength="20" [(ngModel)]="deptCode" placeholder="MKT" />
+                  <div class="field-hint">{{ 'team.deptCodeHint' | t }}</div>
+                </div>
+                <div class="col-sm-6">
+                  <label class="field-label" for="dColor">{{ 'team.deptColor' | t }}</label>
+                  <input id="dColor" type="color" class="field-input color-input" name="color" [(ngModel)]="deptColor" />
+                </div>
+              </div>
+              <div class="alert-x info mt-3 mb-0"><i class="bi bi-info-circle"></i><span>{{ 'team.deptSharedHint' | t }}</span></div>
+            }
+          </div>
+          <div class="modal-x-foot">
+            <button type="button" class="btn-x" (click)="close()">{{ 'common.cancel' | t }}</button>
+            <button type="submit" class="btn-x primary"
+                    [disabled]="saving() || (modal() === 'member' && !memberValid()) || (modal() === 'password' && password().length < 8) || (modal() === 'dept' && !deptValid())">
+              @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
+              {{ (modal() === 'member' ? 'team.createAccount' : modal() === 'password' ? 'team.savePassword' : 'team.createDept') | t }}
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}

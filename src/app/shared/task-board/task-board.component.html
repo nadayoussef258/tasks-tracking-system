@@ -1,0 +1,62 @@
+<div class="board" role="list">
+  @for (col of columns(); track col.status) {
+    <section class="col" role="listitem"
+             [class.drop-ok]="dragging() && allowed(col.status)"
+             [class.drop-over]="overColumn() === col.status"
+             [class.drop-no]="dragging() && !allowed(col.status) && dragging()!.status !== col.status"
+             (dragover)="onDragOver($event, col.status)"
+             (dragleave)="overColumn.set(null)"
+             (drop)="onDrop($event, col.status)">
+      <header class="col-head">
+        <span class="dot" [style.background]="'var(--st-' + col.status + ')'"></span>
+        <h2>{{ 'status.' + col.status | t }}</h2>
+        <span class="count ltr-num">{{ col.tasks.length }}</span>
+      </header>
+
+      <div class="cards">
+        @for (t of col.tasks; track t.id) {
+          <a class="card-t" [routerLink]="['/tasks', t.id]" draggable="true"
+             [class.is-dragging]="dragging()?.id === t.id"
+             (dragstart)="onDragStart($event, t)" (dragend)="onDragEnd()">
+            <div class="card-top">
+              <span class="num ltr-num">{{ t.task_number }}</span>
+              @if (t.source_type === 'ticket') {
+                <span class="chip" [title]="'task.fromTicket' | t"><i class="bi bi-ticket-perforated"></i></span>
+              }
+              @if (t.priority === 'high' || t.priority === 'critical') {
+                <span class="chip pr-{{ t.priority }}">{{ 'priority.' + t.priority | t }}</span>
+              }
+            </div>
+            <div class="title" dir="auto">{{ t.title }}</div>
+            @if (t.status === 'blocked' && t.blocked_reason) {
+              <div class="reason"><i class="bi bi-exclamation-octagon"></i> {{ t.blocked_reason }}</div>
+            }
+            @if (t.progress > 0 && t.status !== 'done') {
+              <div class="progress-x" [attr.aria-label]="'task.progress' | t"><span [style.width.%]="t.progress"></span></div>
+            }
+            <div class="card-foot">
+              @if (t.due_date) {
+                <span class="chip" [class.late]="late(t)"><i class="bi bi-calendar-event"></i>{{ t.due_date | tdate: 'short' }}</span>
+              }
+              @if (t.requires_review) {
+                <span class="chip" [title]="'task.requiresReview' | t"><i class="bi bi-patch-check"></i></span>
+              }
+              @if (showAssignee()) {
+                <span class="who" [title]="name(t.assigned_to) || ('task.unassigned' | t)">
+                  @if (t.assigned_to) {
+                    <span class="avatar">{{ initials(name(t.assigned_to)) }}</span>
+                    <span class="text-ellipsis" dir="auto">{{ name(t.assigned_to) }}</span>
+                  } @else {
+                    <span class="muted">{{ 'task.unassigned' | t }}</span>
+                  }
+                </span>
+              }
+            </div>
+          </a>
+        } @empty {
+          <div class="col-empty">{{ 'board.emptyColumn' | t }}</div>
+        }
+      </div>
+    </section>
+  }
+</div>

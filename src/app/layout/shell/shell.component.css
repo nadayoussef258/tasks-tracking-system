@@ -1,0 +1,36 @@
+.topbar { position: sticky; top: 0; z-index: 1030; background: var(--surface); border-bottom: 1px solid var(--border); }
+.topbar-inner { max-width: 1440px; margin: 0 auto; height: 62px; padding: 0 20px; display: flex; align-items: center; gap: 24px; }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; }
+.brand-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.brand-name { font-size: .98rem; }
+.nav-links { display: flex; gap: 4px; }
+.nav-links a { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-size: .88rem; font-weight: 600; }
+.nav-links a:hover { background: var(--surface-2); color: var(--text); }
+.nav-links a.active { background: var(--accent-light); color: var(--accent); }
+.topbar-end { margin-inline-start: auto; display: flex; align-items: center; gap: 10px; }
+.dept-switch { height: 36px; border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; font-size: .85rem; font-weight: 600; background: var(--surface); max-width: 180px; }
+.icon-btn { position: relative; width: 38px; height: 38px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.icon-btn:hover { background: var(--surface-2); }
+.badge-dot { position: absolute; top: -5px; inset-inline-end: -5px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 999px; background: var(--danger); color: #fff; font-size: .68rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.bell-wrap { position: relative; }
+.bell-panel { position: absolute; top: 46px; inset-inline-end: 0; z-index: 1040; width: 360px; max-height: 70vh; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow-lg); }
+.bell-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-soft); font-size: .9rem; }
+.link-btn { border: 0; background: none; color: var(--accent); font-size: .8rem; font-weight: 600; cursor: pointer; }
+.notif { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: start; border: 0; border-bottom: 1px solid var(--border-soft); background: none; padding: 11px 16px; cursor: pointer; }
+.notif:hover { background: var(--surface-2); }
+.notif.unread { background: #f7f8ff; }
+.notif > i { color: var(--accent); margin-top: 2px; }
+.notif-body { display: flex; flex-direction: column; min-width: 0; }
+.notif-text { font-size: .84rem; color: var(--text); line-height: 1.55; }
+.notif.unread .notif-text { font-weight: 600; }
+.notif-time { font-size: .74rem; color: var(--faint); }
+.me { display: flex; flex-direction: column; line-height: 1.25; max-width: 160px; }
+.me-name { font-size: .84rem; font-weight: 600; }
+.me-role { font-size: .72rem; color: var(--muted); }
+.click-catcher { position: fixed; inset: 0; z-index: 1029; }
+:host-context([dir='rtl']) .flip-rtl { display: inline-block; transform: scaleX(-1); }
+@media (max-width: 760px) {
+  .brand-name, .me, .nav-links a span { display: none; }
+  .topbar-inner { gap: 10px; }
+  .bell-panel { width: min(360px, calc(100vw - 24px)); inset-inline-end: -60px; }
+}

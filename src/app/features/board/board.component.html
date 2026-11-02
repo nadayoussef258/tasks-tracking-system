@@ -1,0 +1,47 @@
+<div class="page">
+  <div class="page-head">
+    <div>
+      <h1 class="page-title">{{ 'board.title' | t: { dept: i18n.deptName(dept()) } }}</h1>
+      <p class="page-sub">
+        {{ 'stats.open' | t }}: <b class="ltr-num">{{ stats().open }}</b> ·
+        {{ 'stats.review' | t }}: <b class="ltr-num">{{ stats().review }}</b> ·
+        <span [class.text-danger]="stats().overdue > 0">{{ 'stats.overdue' | t }}: <b class="ltr-num">{{ stats().overdue }}</b></span>
+      </p>
+    </div>
+    <button type="button" class="btn-x primary" (click)="formOpen.set(true)" [disabled]="!dept()">
+      <i class="bi bi-plus-lg"></i>{{ 'board.newTask' | t }}
+    </button>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <div style="min-width: 200px">
+      <label class="sr-only" for="boardAssignee">{{ 'board.filterAssignee' | t }}</label>
+      <select id="boardAssignee" class="field-select" [(ngModel)]="assignee">
+        <option value="all">{{ 'board.everyone' | t }}</option>
+        <option value="none">{{ 'task.unassigned' | t }}</option>
+        @for (m of members(); track m.user_id) { <option [value]="m.user_id">{{ m.full_name }}</option> }
+      </select>
+    </div>
+    <div style="min-width: 220px; flex: 0 1 320px">
+      <label class="sr-only" for="boardSearch">{{ 'board.search' | t }}</label>
+      <input id="boardSearch" class="field-input" type="search" [(ngModel)]="search" [placeholder]="'board.search' | t" />
+    </div>
+    <button type="button" class="btn-x" (click)="load()" [attr.aria-label]="'common.refresh' | t"><i class="bi bi-arrow-clockwise"></i></button>
+  </div>
+
+  @if (loadError()) {
+    <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ loadError() }}</span></div>
+  }
+  @if (loading()) {
+    <div class="loading-x"><span class="spinner-border"></span></div>
+  } @else {
+    <app-task-board [tasks]="visible()" [canMove]="canMove" (move)="onMove($event)" />
+  }
+</div>
+
+<app-task-form [open]="formOpen()" [departmentId]="dept()?.department_id ?? null"
+               (saved)="onCreated($event)" (closed)="formOpen.set(false)" />
+
+<app-text-dialog [open]="!!pendingBlock()" [title]="'block.title' | t" [label]="'block.label' | t"
+                 [placeholder]="'block.placeholder' | t" [confirmText]="'block.confirm' | t"
+                 (confirm)="confirmBlock($event)" (cancel)="pendingBlock.set(null)" />

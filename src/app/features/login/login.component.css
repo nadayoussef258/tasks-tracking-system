@@ -1,0 +1,11 @@
+.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: linear-gradient(135deg, #f0f1ff 0%, #f5f6fa 50%, #eef2ff 100%); }
+.login-card { width: 100%; max-width: 420px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 40px 36px; box-shadow: 0 8px 32px rgba(79,70,229,.1), 0 2px 8px rgba(0,0,0,.06); }
+.brand-icon { width: 60px; height: 60px; border-radius: 16px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(79,70,229,.35); }
+.login-title { font-size: 1.35rem; font-weight: 700; margin: 0 0 4px; }
+.login-sub { font-size: .88rem; color: var(--muted); margin: 0; }
+.ltr-input { direction: ltr; text-align: start; }
+:host-context([dir='rtl']) .ltr-input { text-align: right; }
+.pw-wrap { position: relative; }
+.pw-wrap .field-input { padding-inline-end: 44px; }
+.eye-btn { position: absolute; top: 0; inset-inline-end: 0; height: 40px; width: 42px; border: 0; background: none; color: var(--faint); cursor: pointer; }
+.btn-signin { height: 44px; font-size: .95rem; }

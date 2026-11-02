@@ -1,0 +1,70 @@
+@if (open()) {
+  <div class="modal-x-backdrop" (click)="closed.emit()">
+    <form class="modal-x" role="dialog" aria-modal="true" [attr.aria-label]="(isEdit() ? 'form.editTitle' : 'form.newTitle') | t"
+          (click)="$event.stopPropagation()" (ngSubmit)="save()">
+      <div class="modal-x-head">
+        <h2>{{ (isEdit() ? 'form.editTitle' : 'form.newTitle') | t }}</h2>
+        <button type="button" class="btn-x ghost icon" (click)="closed.emit()" [attr.aria-label]="'common.close' | t"><i class="bi bi-x-lg"></i></button>
+      </div>
+
+      <div class="modal-x-body">
+        @if (error()) {
+          <div class="alert-x error"><i class="bi bi-exclamation-triangle"></i><span>{{ error() }}</span></div>
+        }
+
+        <div class="field">
+          <label class="field-label" for="tfTitle">{{ 'form.title' | t }} *</label>
+          <input id="tfTitle" class="field-input" name="title" maxlength="200" required
+                 [(ngModel)]="title" [placeholder]="'form.titlePh' | t" />
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="tfDesc">{{ 'form.description' | t }}</label>
+          <textarea id="tfDesc" class="field-textarea" name="description" [(ngModel)]="description" [placeholder]="'form.descriptionPh' | t"></textarea>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="field-label" for="tfAssignee">{{ 'form.assignee' | t }}</label>
+            <select id="tfAssignee" class="field-select" name="assignee" [(ngModel)]="assignedTo" [disabled]="isTicketTask()">
+              <option value="">{{ 'task.unassigned' | t }}</option>
+              @for (m of members(); track m.user_id) {
+                <option [value]="m.user_id">{{ m.full_name }}{{ m.job_title ? ' — ' + m.job_title : '' }}</option>
+              }
+            </select>
+            @if (isTicketTask()) { <div class="field-hint">{{ 'form.ticketAssigneeHint' | t }}</div> }
+          </div>
+          <div class="col-sm-6">
+            <label class="field-label" for="tfPriority">{{ 'form.priority' | t }}</label>
+            <select id="tfPriority" class="field-select" name="priority" [(ngModel)]="priority">
+              @for (p of priorities; track p) { <option [value]="p">{{ 'priority.' + p | t }}</option> }
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="field-label" for="tfStart">{{ 'form.startDate' | t }}</label>
+            <input id="tfStart" type="date" class="field-input" name="start" [(ngModel)]="startDate" />
+          </div>
+          <div class="col-sm-6">
+            <label class="field-label" for="tfDue">{{ 'form.dueDate' | t }}</label>
+            <input id="tfDue" type="date" class="field-input" name="due" [(ngModel)]="dueDate" [min]="startDate()" />
+          </div>
+        </div>
+        @if (datesInvalid()) { <div class="field-hint text-danger">{{ 'form.datesInvalid' | t }}</div> }
+
+        <label class="check-row mt-3">
+          <input type="checkbox" name="review" [(ngModel)]="requiresReview" />
+          <span>{{ 'form.requiresReview' | t }}</span>
+        </label>
+        <div class="field-hint">{{ 'form.requiresReviewHint' | t }}</div>
+      </div>
+
+      <div class="modal-x-foot">
+        <button type="button" class="btn-x" (click)="closed.emit()">{{ 'common.cancel' | t }}</button>
+        <button type="submit" class="btn-x primary" [disabled]="!valid() || saving()">
+          @if (saving()) { <span class="spinner-border spinner-border-sm"></span> }
+          {{ (isEdit() ? 'common.save' : 'form.create') | t }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

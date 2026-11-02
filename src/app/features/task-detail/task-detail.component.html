@@ -1,0 +1,251 @@
+<div class="page">
+  <a class="back" [routerLink]="auth.homeUrl()"><i class="bi bi-arrow-right flip-ltr"></i> {{ 'detail.back' | t }}</a>
+
+  @if (loading()) {
+    <div class="loading-x"><span class="spinner-border"></span></div>
+  } @else if (notFound() || !task()) {
+    <div class="card-x empty-x"><i class="bi bi-search"></i>{{ 'detail.notFound' | t }}</div>
+  } @else {
+    @let t = task()!;
+
+    <!-- ===== header ===== -->
+    <div class="head card-x">
+      <div class="head-top">
+        <span class="num ltr-num">{{ t.task_number }}</span>
+        <span class="chip st-{{ t.status }}">{{ 'status.' + t.status | t }}</span>
+        <span class="chip pr-{{ t.priority }}">{{ 'priority.' + t.priority | t }}</span>
+        @if (t.source_type === 'ticket') {
+          @if (ticketUrl()) {
+            <a class="chip" [href]="ticketUrl()" target="_blank" rel="noopener"><i class="bi bi-ticket-perforated"></i>{{ 'task.fromTicket' | t }}</a>
+          } @else {
+            <span class="chip"><i class="bi bi-ticket-perforated"></i>{{ 'task.fromTicket' | t }}</span>
+          }
+        }
+        @if (late()) { <span class="chip late"><i class="bi bi-alarm"></i>{{ 'task.overdue' | t }}</span> }
+        <span class="head-tools">
+          @if (isManager()) {
+            <button type="button" class="btn-x sm" (click)="editOpen.set(true)"><i class="bi bi-pencil"></i>{{ 'common.edit' | t }}</button>
+            @if (t.status !== 'done' && t.status !== 'cancelled') {
+              <button type="button" class="btn-x sm danger" (click)="cancelTask()"><i class="bi bi-x-circle"></i>{{ 'action.cancel' | t }}</button>
+            }
+            @if (t.source_type === 'manual') {
+              <button type="button" class="btn-x sm danger icon" (click)="deleteTask()" [attr.aria-label]="'common.delete' | t" [title]="'common.delete' | t"><i class="bi bi-trash"></i></button>
+            }
+          }
+        </span>
+      </div>
+      <h1 class="title" dir="auto">{{ t.title }}</h1>
+
+      @if (t.status === 'blocked' && t.blocked_reason) {
+        <div class="alert-x error mb-0"><i class="bi bi-pause-circle"></i><span><b>{{ 'detail.blockedBecause' | t }}</b> {{ t.blocked_reason }}</span></div>
+      }
+      @if (t.status === 'in_review' && isManager()) {
+        <div class="alert-x warn mb-0"><i class="bi bi-hourglass-split"></i><span>{{ 'detail.waitingYourReview' | t }}</span></div>
+      }
+
+      @if (actions().length && canWork()) {
+        <div class="actions">
+          @for (a of actions(); track a.status) {
+            <button type="button" class="btn-x" [class.primary]="a.kind === 'primary'" [class.success]="a.kind === 'success'"
+                    [disabled]="busy()" (click)="runAction(a)">
+              <i class="bi {{ a.icon }}"></i>{{ a.label | t }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="grid">
+      <!-- ===== main column ===== -->
+      <div class="main">
+        @if (t.description) {
+          <section class="card-x">
+            <div class="card-x-head"><h2 class="card-x-title"><i class="bi bi-text-paragraph"></i>{{ 'detail.description' | t }}</h2></div>
+            <div class="card-x-body desc" dir="auto">{{ t.description }}</div>
+          </section>
+        }
+
+        <!-- checklist -->
+        <section class="card-x">
+          <div class="card-x-head">
+            <h2 class="card-x-title"><i class="bi bi-list-check"></i>{{ 'detail.checklist' | t }}</h2>
+            @if (checklist().length) { <span class="small-x muted ltr-num">{{ doneCount() }} / {{ checklist().length }}</span> }
+          </div>
+          <div class="card-x-body">
+            @for (c of checklist(); track c.id) {
+              <div class="check-item" [class.done]="c.is_done">
+                <label class="check-row">
+                  <input type="checkbox" [checked]="c.is_done" [disabled]="!canWork()" (change)="toggleItem(c)" />
+                  <span dir="auto">{{ c.title }}</span>
+                </label>
+                @if (canWork()) {
+                  <button type="button" class="btn-x ghost icon sm" (click)="removeItem(c)" [attr.aria-label]="'common.delete' | t"><i class="bi bi-x"></i></button>
+                }
+              </div>
+            } @empty {
+              <p class="small-x muted mb-2">{{ 'detail.checklistEmpty' | t }}</p>
+            }
+            @if (canWork()) {
+              <form class="inline-form" (ngSubmit)="addItem()">
+                <label class="sr-only" for="newItem">{{ 'detail.addStep' | t }}</label>
+                <input id="newItem" class="field-input" name="newItem" maxlength="300" [(ngModel)]="newItem" [placeholder]="'detail.addStepPh' | t" />
+                <button type="submit" class="btn-x" [disabled]="!newItem().trim()"><i class="bi bi-plus-lg"></i>{{ 'detail.addStep' | t }}</button>
+              </form>
+            }
+          </div>
+        </section>
+
+        <!-- deliverables -->
+        <section class="card-x">
+          <div class="card-x-head">
+            <h2 class="card-x-title"><i class="bi bi-paperclip"></i>{{ 'detail.deliverables' | t }}</h2>
+          </div>
+          <div class="card-x-body">
+            @for (d of deliverables(); track d.id) {
+              <div class="file-row">
+                <i class="bi file-icon" [class.bi-file-earmark-arrow-down]="d.kind === 'file'" [class.bi-link-45deg]="d.kind === 'link'"></i>
+                <div class="file-main">
+                  @if (d.kind === 'file') {
+                    @let parts = splitName(d.file_name);
+                    <button type="button" class="file-name" (click)="openFile(d)"><bdi>{{ parts[0] }}</bdi>@if (parts[1]) {<bdi dir="ltr">.{{ parts[1] }}</bdi>}</button>
+                  } @else {
+                    <a class="file-name" [href]="d.url" target="_blank" rel="noopener noreferrer">{{ d.url }}</a>
+                  }
+                  <div class="small-x muted">
+                    {{ name(d.uploaded_by) }} · {{ d.created_at | tdate: 'time' }}
+                    @if (d.file_size) { · <span class="ltr-num">{{ fileSize(d.file_size) }}</span> }
+                  </div>
+                  @if (d.note) { <div class="small-x" dir="auto">{{ d.note }}</div> }
+                  @if (d.review_status === 'changes_requested' && d.review_note) {
+                    <div class="small-x review-note" dir="auto"><b>{{ 'detail.reviewNote' | t }}</b> {{ d.review_note }}</div>
+                  }
+                </div>
+                <span class="chip" [class.st-done]="d.review_status === 'approved'" [class.st-blocked]="d.review_status === 'changes_requested'"
+                      [class.st-in_review]="d.review_status === 'pending'">{{ 'review.' + d.review_status | t }}</span>
+                <div class="file-tools">
+                  @if (isManager() && d.review_status !== 'approved') {
+                    <button type="button" class="btn-x sm success" (click)="approve(d)"><i class="bi bi-check2"></i>{{ 'review.approve' | t }}</button>
+                  }
+                  @if (isManager() && d.review_status !== 'changes_requested') {
+                    <button type="button" class="btn-x sm" (click)="changesFor.set(d)">{{ 'review.requestChanges' | t }}</button>
+                  }
+                  @if (canRemove(d)) {
+                    <button type="button" class="btn-x sm ghost icon danger" (click)="removeDeliverable(d)" [attr.aria-label]="'common.delete' | t"><i class="bi bi-trash"></i></button>
+                  }
+                </div>
+              </div>
+            } @empty {
+              <p class="small-x muted mb-2">{{ 'detail.deliverablesEmpty' | t }}</p>
+            }
+
+            @if (canWork()) {
+              <div class="upload-box">
+                <input class="field-input" [(ngModel)]="fileNote" [placeholder]="'detail.notePh' | t" [attr.aria-label]="'detail.note' | t" />
+                <label class="btn-x primary" [class.disabled]="uploading()">
+                  @if (uploading()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-upload"></i> }
+                  {{ 'detail.uploadFile' | t }}
+                  <input type="file" class="sr-only" (change)="onFile($event)" [disabled]="uploading()" />
+                </label>
+                <button type="button" class="btn-x" (click)="showLinkForm.set(!showLinkForm())"><i class="bi bi-link-45deg"></i>{{ 'detail.addLink' | t }}</button>
+              </div>
+              <div class="field-hint">{{ 'detail.uploadHint' | t }}</div>
+              @if (showLinkForm()) {
+                <form class="inline-form mt-2" (ngSubmit)="addLink()">
+                  <input class="field-input ltr" name="linkUrl" type="url" [(ngModel)]="linkUrl" placeholder="https://drive.google.com/…" [attr.aria-label]="'detail.linkUrl' | t" />
+                  <input class="field-input" name="linkNote" [(ngModel)]="linkNote" [placeholder]="'detail.notePh' | t" [attr.aria-label]="'detail.note' | t" />
+                  <button type="submit" class="btn-x primary" [disabled]="!linkUrl().trim()">{{ 'common.add' | t }}</button>
+                </form>
+              }
+            }
+          </div>
+        </section>
+
+        <!-- timeline -->
+        <section class="card-x">
+          <div class="card-x-head"><h2 class="card-x-title"><i class="bi bi-clock-history"></i>{{ 'detail.timeline' | t }}</h2></div>
+          <div class="card-x-body">
+            <ol class="timeline">
+              @for (u of updates(); track u.id) {
+                <li [class.is-comment]="u.kind === 'comment'">
+                  @if (u.kind === 'comment') {
+                    <span class="avatar">{{ initials(name(u.author_id) || '?') }}</span>
+                    <div class="bubble">
+                      <div class="small-x"><b>{{ name(u.author_id) }}</b> <span class="muted">· {{ u.created_at | tdate: 'time' }}</span></div>
+                      <div class="comment-text" dir="auto">{{ u.content }}</div>
+                    </div>
+                  } @else {
+                    <i class="bi {{ updateIcon(u) }} tl-icon"></i>
+                    <div class="small-x">
+                      {{ updateText(u) }}
+                      @if (u.kind === 'status_change' && u.meta['to'] === 'blocked' && u.content) { — <span dir="auto">{{ u.content }}</span> }
+                      @if (u.kind === 'review' && u.content) { — <span dir="auto">{{ u.content }}</span> }
+                      <span class="muted"> · {{ name(u.author_id) || ('timeline.systemActor' | t) }} · {{ u.created_at | tdate: 'time' }}</span>
+                    </div>
+                  }
+                </li>
+              }
+            </ol>
+            @if (canWork()) {
+              <form class="comment-box" (ngSubmit)="sendComment()">
+                <label class="sr-only" for="commentBox">{{ 'detail.comment' | t }}</label>
+                <textarea id="commentBox" class="field-textarea" name="comment" rows="2" [(ngModel)]="comment" [placeholder]="'detail.commentPh' | t"></textarea>
+                <button type="submit" class="btn-x primary" [disabled]="!comment().trim()"><i class="bi bi-send flip-rtl"></i>{{ 'detail.send' | t }}</button>
+              </form>
+            }
+          </div>
+        </section>
+      </div>
+
+      <!-- ===== side column ===== -->
+      <aside class="side">
+        <section class="card-x card-x-body">
+          <div class="prog-head">
+            <span class="field-label mb-0">{{ 'task.progress' | t }}</span>
+            <b class="ltr-num">{{ t.progress }}%</b>
+          </div>
+          <div class="progress-x" [class.done]="t.status === 'done'"><span [style.width.%]="t.progress"></span></div>
+          @if (canWork() && !checklist().length && t.status !== 'done' && t.status !== 'cancelled') {
+            <input type="range" class="form-range mt-2" min="0" max="100" step="5" [value]="t.progress"
+                   (change)="setProgress($any($event.target).value)" [attr.aria-label]="'task.progress' | t" />
+          }
+          @if (checklist().length) { <div class="field-hint">{{ 'detail.progressAuto' | t }}</div> }
+        </section>
+
+        <section class="card-x card-x-body">
+          <dl class="facts">
+            <dt>{{ 'task.department' | t }}</dt>
+            <dd>{{ i18n.deptName(auth.department(t.department_id)) || '—' }}</dd>
+            <dt>{{ 'task.assignee' | t }}</dt>
+            <dd>
+              @if (t.assigned_to) {
+                <span class="avatar sm">{{ initials(name(t.assigned_to)) }}</span> {{ name(t.assigned_to) }}
+              } @else { <span class="muted">{{ 'task.unassigned' | t }}</span> }
+            </dd>
+            <dt>{{ 'task.createdBy' | t }}</dt>
+            <dd>{{ name(t.created_by) || '—' }}</dd>
+            <dt>{{ 'form.startDate' | t }}</dt>
+            <dd>{{ (t.start_date | tdate) || '—' }}</dd>
+            <dt>{{ 'form.dueDate' | t }}</dt>
+            <dd [class.text-danger]="late()">{{ (t.due_date | tdate) || '—' }}</dd>
+            @if (t.started_at) { <dt>{{ 'task.startedAt' | t }}</dt><dd>{{ t.started_at | tdate: 'full' }}</dd> }
+            @if (t.completed_at) { <dt>{{ 'task.completedAt' | t }}</dt><dd>{{ t.completed_at | tdate: 'full' }}</dd> }
+            <dt>{{ 'task.createdAt' | t }}</dt>
+            <dd>{{ t.created_at | tdate: 'full' }}</dd>
+            <dt>{{ 'form.requiresReview' | t }}</dt>
+            <dd>{{ (t.requires_review ? 'common.yes' : 'common.no') | t }}</dd>
+          </dl>
+        </section>
+      </aside>
+    </div>
+
+    <app-task-form [open]="editOpen()" [task]="t" (saved)="onEdited($event)" (closed)="editOpen.set(false)" />
+  }
+</div>
+
+<app-text-dialog [open]="blockOpen()" [title]="'block.title' | t" [label]="'block.label' | t"
+                 [placeholder]="'block.placeholder' | t" [confirmText]="'block.confirm' | t"
+                 (confirm)="confirmBlock($event)" (cancel)="blockOpen.set(false)" />
+
+<app-text-dialog [open]="!!changesFor()" [title]="'review.requestChanges' | t" [label]="'review.whatToChange' | t"
+                 [placeholder]="'review.whatToChangePh' | t" [confirmText]="'review.send' | t"
+                 (confirm)="requestChanges($event)" (cancel)="changesFor.set(null)" />

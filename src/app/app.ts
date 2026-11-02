@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LangSwitcherComponent } from './shared/lang-switcher/lang-switcher.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
+  imports: [RouterOutlet, LangSwitcherComponent],
+  template: `<router-outlet /><app-lang-switcher />`,
 })
-export class App {
-  protected readonly title = signal('tasks-system');
-}
+export class App {}

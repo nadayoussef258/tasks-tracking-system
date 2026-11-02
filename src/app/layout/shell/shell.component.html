@@ -1,0 +1,79 @@
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" routerLink="/">
+      <span class="brand-icon"><i class="bi bi-kanban"></i></span>
+      <span class="brand-name">{{ 'app.name' | t }}</span>
+    </a>
+
+    <nav class="nav-links" [attr.aria-label]="'nav.main' | t">
+      @if (auth.isManager()) {
+        <a routerLink="/board" routerLinkActive="active"><i class="bi bi-columns-gap"></i><span>{{ 'nav.board' | t }}</span></a>
+        <a routerLink="/team" routerLinkActive="active"><i class="bi bi-people"></i><span>{{ 'nav.team' | t }}</span></a>
+      }
+      <a routerLink="/my-tasks" routerLinkActive="active"><i class="bi bi-person-workspace"></i><span>{{ 'nav.myTasks' | t }}</span></a>
+    </nav>
+
+    <div class="topbar-end">
+      @if (auth.managedDepartments().length > 1) {
+        <label class="sr-only" for="deptSwitch">{{ 'nav.department' | t }}</label>
+        <select id="deptSwitch" class="dept-switch" [value]="auth.currentDepartment()?.department_id" (change)="onDeptChange($event)">
+          @for (d of auth.managedDepartments(); track d.department_id) {
+            <option [value]="d.department_id">{{ i18n.deptName(d) }}</option>
+          }
+        </select>
+      }
+
+      <div class="bell-wrap">
+        <button type="button" class="icon-btn" (click)="toggleBell()" [attr.aria-expanded]="bellOpen()"
+                [attr.aria-label]="'nav.notifications' | t">
+          <i class="bi bi-bell"></i>
+          @if (unread() > 0) { <span class="badge-dot ltr-num">{{ unread() > 9 ? '9+' : unread() }}</span> }
+        </button>
+        @if (bellOpen()) {
+          <div class="bell-panel" role="menu">
+            <div class="bell-head">
+              <strong>{{ 'nav.notifications' | t }}</strong>
+              @if (unread() > 0) { <button type="button" class="link-btn" (click)="markAllRead()">{{ 'notif.markAll' | t }}</button> }
+            </div>
+            @if (loadingNotifs()) {
+              <div class="loading-x"><span class="spinner-border spinner-border-sm"></span></div>
+            } @else {
+              @for (n of notifications(); track n.id) {
+                <button type="button" class="notif" [class.unread]="!n.is_read" (click)="openNotification(n)" role="menuitem">
+                  <i class="bi {{ notifIcon(n) }}"></i>
+                  <span class="notif-body">
+                    <span class="notif-text" dir="auto">{{ notifText(n) }}</span>
+                    <span class="notif-time">{{ n.created_at | tdate: 'time' }}</span>
+                  </span>
+                </button>
+              } @empty {
+                <div class="empty-x"><i class="bi bi-bell-slash"></i>{{ 'notif.empty' | t }}</div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <div class="me">
+        <span class="me-name text-ellipsis">{{ auth.user()?.full_name }}</span>
+        <span class="me-role">{{ roleLabel() | t }}</span>
+      </div>
+      <button type="button" class="icon-btn" (click)="auth.logout()" [attr.aria-label]="'nav.logout' | t" [title]="'nav.logout' | t">
+        <i class="bi bi-box-arrow-right flip-rtl"></i>
+      </button>
+    </div>
+  </div>
+</header>
+
+@if (bellOpen()) { <div class="click-catcher" (click)="bellOpen.set(false)"></div> }
+
+<main><router-outlet /></main>
+
+<div class="toasts" aria-live="polite">
+  @for (t of toast.toasts(); track t.id) {
+    <div class="toast-x {{ t.kind }}" (click)="toast.dismiss(t.id)">
+      <i class="bi" [class.bi-check-circle]="t.kind === 'success'" [class.bi-exclamation-triangle]="t.kind === 'error'" [class.bi-info-circle]="t.kind === 'info'"></i>
+      <span>{{ t.text }}</span>
+    </div>
+  }
+</div>
