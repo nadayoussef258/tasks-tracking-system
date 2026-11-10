@@ -1,16 +1,18 @@
 import { Component, computed, effect, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe } from '../../core/i18n/t.pipe';
+import { Member, Task } from '../../core/models/models';
 import { BoardPageBase } from '../../shared/board-page.base';
 import { TaskBoardComponent } from '../../shared/task-board/task-board.component';
 import { TaskFormComponent } from '../../shared/task-form/task-form.component';
-import { Member, Task } from '../../core/models/models';
 import { TextDialogComponent } from '../../shared/text-dialog/text-dialog.component';
+import { DeptNavComponent } from '../../shared/dept-nav/dept-nav.component';
+
 
 /** A department's board — managers and the super admin. */
 @Component({
   selector: 'app-board',
-  imports: [FormsModule, TranslatePipe, TaskBoardComponent, TaskFormComponent, TextDialogComponent],
+  imports: [FormsModule, TranslatePipe, TaskBoardComponent, TaskFormComponent, TextDialogComponent, DeptNavComponent],
   templateUrl: './board.component.html',
 })
 export class BoardComponent extends BoardPageBase {

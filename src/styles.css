@@ -3,19 +3,24 @@
    ===================================================================== */
 :root {
   --font: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
-  --bg: #f5f6fa;
+  /* B14 brand: navy #19587B + green #9CCE5F (from the logo) */
+  --brand: #19587b;
+  --brand-green: #9cce5f;
+  --brand-green-dark: #5e8f29;
+  --brand-gradient: linear-gradient(135deg, #9cce5f 0%, #3f8a7a 45%, #19587b 100%);
+  --bg: #f4f7f9;
   --surface: #ffffff;
-  --surface-2: #f8f9fc;
-  --border: #e4e6ef;
-  --border-soft: #f0f1f7;
+  --surface-2: #f7f9fb;
+  --border: #e1e7ec;
+  --border-soft: #eef2f5;
   --text: #111827;
   --text-2: #374151;
   --muted: #6b7280;
   --faint: #9ca3af;
-  --accent: #4f46e5;
-  --accent-dark: #4338ca;
-  --accent-light: #eef2ff;
-  --accent-mid: #c7d2fe;
+  --accent: #19587b;
+  --accent-dark: #11425e;
+  --accent-light: #e9f2f7;
+  --accent-mid: #b6d1e0;
   --danger: #dc2626;
   --danger-light: #fef2f2;
   --radius: 12px;

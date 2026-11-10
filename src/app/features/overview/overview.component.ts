@@ -130,9 +130,9 @@ export class OverviewComponent implements OnInit {
     }
   }
 
-  openBoard(d: Department) {
+  openDept(d: Department, page: '/board' | '/team') {
     this.auth.selectDepartment(d.department_id);
-    this.router.navigateByUrl('/board');
+    this.router.navigateByUrl(page);
   }
 
   pct(n: number, total: number): number {

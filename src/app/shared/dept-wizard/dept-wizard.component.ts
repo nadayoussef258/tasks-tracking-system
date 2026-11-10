@@ -37,7 +37,7 @@ export class DeptWizardComponent {
   code = signal('');
   nameAr = signal('');
   nameEn = signal('');
-  color = signal('#4f46e5');
+  color = signal('#19587b');
   deptId = signal('');
   deptLabel = signal('');
 
@@ -61,7 +61,7 @@ export class DeptWizardComponent {
     effect(() => {
       if (!this.open()) return;
       this.step.set('dept');
-      this.code.set(''); this.nameAr.set(''); this.nameEn.set(''); this.color.set('#4f46e5');
+      this.code.set(''); this.nameAr.set(''); this.nameEn.set(''); this.color.set('#19587b');
       this.mode.set('new'); this.fullName.set(''); this.email.set(''); this.jobTitle.set('');
       this.password.set(generatePassword()); this.creds.set(null); this.managerName.set('');
       this.clearError();

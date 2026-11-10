@@ -1,19 +1,17 @@
 import { Component, computed, inject, input, signal, effect, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { TranslatePipe, TranslateDatePipe } from '../../core/i18n/t.pipe';
-
-import { canMoveTo, initials, splitFileName } from '../../shared/task-rules';
-import { TaskFormComponent } from '../../shared/task-form/task-form.component';
-import { AuthService } from '../../core/services/auth.service';
+import { ChecklistItem, Deliverable, Task, TaskStatus, TaskUpdate, isOverdue } from '../../core/models/models';
 import { MAX_FILE_BYTES, TasksService } from '../../core/services/tasks.service';
 import { ToastService } from '../../core/services/toast.service';
 import { errorKey } from '../../core/models/errors';
-import { TextDialogComponent } from '../../shared/text-dialog/text-dialog.component';
-import { ChecklistItem, Deliverable, isOverdue, Task, TaskStatus, TaskUpdate } from '../../core/models/models';
+import { canMoveTo, initials, splitFileName } from '../../shared/task-rules';
+import { TaskFormComponent } from '../../shared/task-form/task-form.component';
 import { environment } from '../../../environments/environment';
-
+import { TextDialogComponent } from '../../shared/text-dialog/text-dialog.component';
 
 interface StatusAction { status: TaskStatus; label: string; icon: string; kind: 'primary' | 'success' | 'plain' }
 
@@ -86,7 +84,8 @@ export class TaskDetailComponent {
           : [a('in_progress', 'action.backToWork', 'bi-arrow-counterclockwise')];
         break;
       case 'blocked':
-        list = [a('in_progress', 'action.resume', 'bi-play-fill', 'primary')];
+        // stopped: resume the work, or reopen it as new
+        list = [a('in_progress', 'action.resume', 'bi-play-fill', 'primary'), a('todo', 'action.reopen', 'bi-arrow-counterclockwise')];
         break;
       case 'done':
         list = [a('in_progress', 'action.reopen', 'bi-arrow-counterclockwise')];

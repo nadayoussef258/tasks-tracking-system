@@ -1,13 +1,11 @@
 <div class="page">
+  <app-dept-nav active="team" />
   <div class="page-head">
     <div>
       <h1 class="page-title">{{ 'team.title' | t: { dept: i18n.deptName(dept()) } }}</h1>
       <p class="page-sub">{{ 'team.subtitle' | t }}</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-      @if (auth.isSuperAdmin()) {
-        <button type="button" class="btn-x" (click)="wizardOpen.set(true)"><i class="bi bi-building-add"></i>{{ 'team.addDept' | t }}</button>
-      }
       <button type="button" class="btn-x primary" (click)="openMember()" [disabled]="!dept()"><i class="bi bi-person-plus"></i>{{ 'team.addMember' | t }}</button>
     </div>
   </div>
@@ -187,5 +185,3 @@
     </div>
   </div>
 }
-
-<app-dept-wizard [open]="wizardOpen()" (closed)="wizardOpen.set(false)" (created)="load()" />

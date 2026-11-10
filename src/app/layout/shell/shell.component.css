@@ -1,7 +1,9 @@
+.topbar::after { content: ''; position: absolute; inset: auto 0 -1px 0; height: 3px; background: var(--brand-gradient); }
 .topbar { position: sticky; top: 0; z-index: 1030; background: var(--surface); border-bottom: 1px solid var(--border); }
 .topbar-inner { max-width: 1440px; margin: 0 auto; height: 62px; padding: 0 20px; display: flex; align-items: center; gap: 24px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 700; }
-.brand-icon { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #4f46e5, #7c3aed); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+.brand-logo { height: 30px; width: auto; display: block; }
+.brand { padding-inline-end: 16px; border-inline-end: 1px solid var(--border); }
 .brand-name { font-size: .98rem; }
 .nav-links { display: flex; gap: 4px; }
 .nav-links a { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-size: .88rem; font-weight: 600; }
@@ -18,7 +20,7 @@
 .link-btn { border: 0; background: none; color: var(--accent); font-size: .8rem; font-weight: 600; cursor: pointer; }
 .notif { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: start; border: 0; border-bottom: 1px solid var(--border-soft); background: none; padding: 11px 16px; cursor: pointer; }
 .notif:hover { background: var(--surface-2); }
-.notif.unread { background: #f7f8ff; }
+.notif.unread { background: var(--accent-light); }
 .notif > i { color: var(--accent); margin-top: 2px; }
 .notif-body { display: flex; flex-direction: column; min-width: 0; }
 .notif-text { font-size: .84rem; color: var(--text); line-height: 1.55; }

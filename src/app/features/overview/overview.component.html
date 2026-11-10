@@ -33,7 +33,8 @@
           <div class="dept-head">
             <span class="dot lg" [style.background]="d.dept.color"></span>
             <h3>{{ i18n.deptName(d.dept) }}</h3>
-            <button type="button" class="btn-x sm" (click)="openBoard(d.dept)">{{ 'overview.openBoard' | t }}<i class="bi bi-arrow-left flip-ltr"></i></button>
+            <button type="button" class="btn-x sm" (click)="openDept(d.dept, '/team')" [title]="'nav.team' | t"><i class="bi bi-people"></i></button>
+            <button type="button" class="btn-x sm" (click)="openDept(d.dept, '/board')">{{ 'overview.openBoard' | t }}<i class="bi bi-arrow-left flip-ltr"></i></button>
           </div>
           @if (d.active) {
             <div class="stack" role="img" [attr.aria-label]="'overview.statusSplit' | t">

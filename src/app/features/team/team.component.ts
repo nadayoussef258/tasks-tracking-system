@@ -7,14 +7,15 @@ import { TranslationService } from '../../core/i18n/translation.service';
 import { TranslatePipe } from '../../core/i18n/t.pipe';
 import { initials } from '../../shared/task-rules';
 import { Credentials, CredentialsComponent } from '../../shared/credentials/credentials.component';
-import { DeptWizardComponent } from '../../shared/dept-wizard/dept-wizard.component';
+import { DeptNavComponent } from '../../shared/dept-nav/dept-nav.component';
+
 
 type Modal = 'member' | 'password' | 'edit' | null;
 
 /** Team management: members of a department and their accounts. */
 @Component({
   selector: 'app-team',
-  imports: [FormsModule, TranslatePipe, CredentialsComponent, DeptWizardComponent],
+  imports: [FormsModule, TranslatePipe, CredentialsComponent, DeptNavComponent],
   templateUrl: './team.component.html',
   styleUrl: './team.component.css',
 })
@@ -30,7 +31,6 @@ export class TeamComponent {
   loadError = signal('');
 
   modal = signal<Modal>(null);
-  wizardOpen = signal(false);
   saving = signal(false);
   formError = signal('');
   formErrorCode = signal('');
@@ -201,4 +201,4 @@ export class TeamComponent {
     const text = this.i18n.t(key);
     return text !== key ? text : this.i18n.t('err.generic');
   }
-} 
+}

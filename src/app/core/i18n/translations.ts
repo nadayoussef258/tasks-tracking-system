@@ -286,6 +286,8 @@ export const EN = {
   'team.err.client_account': "This is a client account of the ticketing system: it cannot join the tasks system.",
   'team.err.is_super_admin': "The super admin already sees every department.",
 
+  'deptNav.label': 'Department pages',
+
   'common.cancel': 'Cancel',
   'common.close': 'Close',
   'common.save': 'Save',
@@ -586,6 +588,8 @@ export const AR: Record<TKey, string> = {
   'team.err.already_member': "هذا الشخص عضو في القسم بالفعل.",
   'team.err.client_account': "هذا حساب عميل في نظام التيكتات: لا يمكن إضافته لنظام المهام.",
   'team.err.is_super_admin': "المدير العام يرى كل الأقسام بالفعل.",
+
+  'deptNav.label': 'صفحات القسم',
 
   'common.cancel': 'إلغاء',
   'common.close': 'إغلاق',
