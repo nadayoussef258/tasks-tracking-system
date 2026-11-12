@@ -155,6 +155,7 @@ export const EN = {
   'notif.deliverable_reviewed.approved': 'Your deliverable on {title} was approved',
   'notif.deliverable_reviewed.changes_requested': 'Changes requested on {title}',
   'notif.due_soon': '{title} is due tomorrow',
+  'notif.ticket_part': 'A shared ticket needs someone from your team: {title}',
 
   'toast.moved': '{task} → {status}',
   'toast.created': 'Task {task} created',
@@ -458,6 +459,7 @@ export const AR: Record<TKey, string> = {
   'notif.deliverable_reviewed.approved': 'تم اعتماد ما سلّمته في: {title}',
   'notif.deliverable_reviewed.changes_requested': 'مطلوب تعديلات في: {title}',
   'notif.due_soon': 'موعد تسليم "{title}" غدًا',
+  'notif.ticket_part': 'تذكرة مشتركة تحتاج من يتولاها من فريقك: {title}',
 
   'toast.moved': '{task} ← {status}',
   'toast.created': 'تم إنشاء المهمة {task}',

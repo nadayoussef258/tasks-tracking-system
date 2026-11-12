@@ -90,7 +90,7 @@ export interface Deliverable {
 export interface TaskNotification {
   id: string;
   task_id: string;
-  type: 'assigned' | 'status_changed' | 'comment' | 'deliverable_submitted' | 'deliverable_reviewed' | 'due_soon';
+  type: 'assigned' | 'status_changed' | 'comment' | 'deliverable_submitted' | 'deliverable_reviewed' | 'due_soon' | 'ticket_part';
   title: string;
   meta: Record<string, any>;
   actor_id: string | null;

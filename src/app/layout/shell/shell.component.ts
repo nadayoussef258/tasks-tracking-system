@@ -2,9 +2,9 @@ import { Component, DestroyRef, HostListener, OnInit, computed, inject, signal }
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateDatePipe, TranslatePipe } from '../../core/i18n/t.pipe';
 import { AuthService } from '../../core/services/auth.service';
-import { TasksService } from '../../core/services/tasks.service';
 import { TranslationService } from '../../core/i18n/translation.service';
 import { ToastService } from '../../core/services/toast.service';
+import { TasksService } from '../../core/services/tasks.service';
 import { TaskNotification } from '../../core/models/models';
 
 
@@ -77,6 +77,7 @@ export class ShellComponent implements OnInit {
     return ({
       assigned: 'bi-person-check', status_changed: 'bi-arrow-left-right', comment: 'bi-chat-left-text',
       deliverable_submitted: 'bi-paperclip', deliverable_reviewed: 'bi-patch-check', due_soon: 'bi-alarm',
+      ticket_part: 'bi-diagram-3',
     } as Record<string, string>)[n.type] ?? 'bi-bell';
   }
 
